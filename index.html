@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Switch Typing Practice</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f7f6;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 600px;
+        }
+        #text-display {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+            letter-spacing: 1px;
+        }
+        #input-field {
+            width: 90%;
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        #input-field:focus {
+            border-color: #007bff;
+        }
+        .correct { color: #28a745; }
+        .incorrect { color: #dc3545; border-bottom: 2px solid #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Typing Practice</h2>
+    <div id="text-display"></div>
+    <input type="text" id="input-field" placeholder="Start typing here..." autofocus>
+    <p style="margin-top: 20px; color: #666; font-size: 14px;">Once you finish, it will automatically load the next sentence.</p>
+</div>
+
+<script>
+    const sentences = [
+        "The quick brown fox jumps over the lazy dog.",
+        "Success is not final, failure is not fatal.",
+        "Practice makes a man perfect in every field.",
+        "Code is like humor. When you have to explain it, it is bad.",
+        "Believe you can and you are halfway there."
+    ];
+
+    let currentSentenceIndex = 0;
+    const textDisplay = document.getElementById('text-display');
+    const inputField = document.getElementById('input-field');
+
+    // Function to load a new sentence
+    function loadSentence() {
+        textDisplay.innerText = sentences[currentSentenceIndex];
+        inputField.value = "";
+    }
+
+    // Checking the input
+    inputField.addEventListener('input', () => {
+        const quoteArray = textDisplay.innerText;
+        const valueArray = inputField.value;
+
+        // Jodi input sentence-er sathe exact mile jay
+        if (valueArray === quoteArray) {
+            currentSentenceIndex++;
+            
+            // Jodi sentence sesh hoye jay, abar shuru theke start hobe
+            if (currentSentenceIndex >= sentences.length) {
+                currentSentenceIndex = 0;
+                alert("Great job! Restarting the practice.");
+            }
+            
+            loadSentence();
+        }
+    });
+
+    // Initial load
+    loadSentence();
+</script>
+
+</body>
+</html>
