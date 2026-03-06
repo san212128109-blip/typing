@@ -3,55 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto-Switch Typing Practice</title>
+    <title>Pro Typing Practice</title>
     <style>
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --error: #dc3545;
+            --bg: #f8f9fa;
+        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            background-color: #f4f7f6;
+            background-color: var(--bg);
             margin: 0;
         }
         .container {
             text-align: center;
             background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 600px;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            max-width: 700px;
+            width: 90%;
         }
         #text-display {
             font-size: 24px;
-            margin-bottom: 20px;
-            color: #333;
-            letter-spacing: 1px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            color: #666;
+            text-align: left;
+            background: #fdfdfd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
         }
+        /* Styling for individual letters */
+        .char { position: relative; }
+        .char.correct { color: var(--success); }
+        .char.incorrect { color: white; background-color: var(--error); border-radius: 2px; }
+        .char.current { border-bottom: 3px solid var(--primary); }
+
         #input-field {
-            width: 90%;
-            padding: 12px;
+            width: 100%;
+            padding: 15px;
             font-size: 18px;
             border: 2px solid #ddd;
-            border-radius: 6px;
+            border-radius: 8px;
             outline: none;
-            transition: border-color 0.3s;
+            box-sizing: border-box;
         }
-        #input-field:focus {
-            border-color: #007bff;
+        #input-field:focus { border-color: var(--primary); }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            font-weight: bold;
+            color: #444;
         }
-        .correct { color: #28a745; }
-        .incorrect { color: #dc3545; border-bottom: 2px solid #dc3545; }
+        .stat-box { font-size: 1.1rem; }
+        .stat-box span { color: var(--primary); font-size: 1.4rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Typing Practice</h2>
+    
     <div id="text-display"></div>
-    <input type="text" id="input-field" placeholder="Start typing here..." autofocus>
-    <p style="margin-top: 20px; color: #666; font-size: 14px;">Once you finish, it will automatically load the next sentence.</p>
+    
+    <input type="text" id="input-field" placeholder="Start typing the text above..." autofocus autocomplete="off">
+    
+    <div class="stats">
+        <div class="stat-box">WPM: <span id="wpm">0</span></div>
+        <div class="stat-box">Accuracy: <span id="accuracy">100%</span></div>
+    </div>
 </div>
 
 <script>
@@ -63,34 +92,83 @@
         "Believe you can and you are halfway there."
     ];
 
-    let currentSentenceIndex = 0;
+    let currentIndex = 0;
+    let startTime = null;
+    let mistakes = 0;
+
     const textDisplay = document.getElementById('text-display');
     const inputField = document.getElementById('input-field');
+    const wpmDisplay = document.getElementById('wpm');
+    const accuracyDisplay = document.getElementById('accuracy');
 
-    // Function to load a new sentence
     function loadSentence() {
-        textDisplay.innerText = sentences[currentSentenceIndex];
+        const sentence = sentences[currentIndex];
+        // Break sentence into spans for individual styling
+        textDisplay.innerHTML = sentence.split('').map(char => 
+            `<span class="char">${char}</span>`
+        ).join('');
         inputField.value = "";
+        updateCursor(0);
     }
 
-    // Checking the input
-    inputField.addEventListener('input', () => {
-        const quoteArray = textDisplay.innerText;
-        const valueArray = inputField.value;
+    function updateCursor(index) {
+        const chars = textDisplay.querySelectorAll('.char');
+        chars.forEach(span => span.classList.remove('current'));
+        if (chars[index]) chars[index].classList.add('current');
+    }
 
-        // Jodi input sentence-er sathe exact mile jay
-        if (valueArray === quoteArray) {
-            currentSentenceIndex++;
-            
-            // Jodi sentence sesh hoye jay, abar shuru theke start hobe
-            if (currentSentenceIndex >= sentences.length) {
-                currentSentenceIndex = 0;
-                alert("Great job! Restarting the practice.");
+    inputField.addEventListener('input', () => {
+        if (!startTime) startTime = new Date();
+        
+        const characters = textDisplay.querySelectorAll('.char');
+        const userInput = inputField.value.split('');
+        
+        mistakes = 0;
+
+        characters.forEach((charSpan, index) => {
+            const typedChar = userInput[index];
+
+            if (typedChar == null) {
+                charSpan.classList.remove('correct', 'incorrect');
+            } else if (typedChar === charSpan.innerText) {
+                charSpan.classList.add('correct');
+                charSpan.classList.remove('incorrect');
+            } else {
+                charSpan.classList.add('incorrect');
+                charSpan.classList.remove('correct');
+                mistakes++;
             }
-            
+        });
+
+        updateCursor(userInput.length);
+        calculateStats(userInput.length);
+
+        // Success Condition
+        if (inputField.value === sentences[currentIndex]) {
+            currentIndex++;
+            if (currentIndex >= sentences.length) {
+                alert("Session Complete!");
+                currentIndex = 0;
+                startTime = null; // Reset timer for new round
+            }
             loadSentence();
         }
     });
+
+    function calculateStats(typedLength) {
+        if (!startTime) return;
+
+        // WPM Calculation
+        const timeElapsed = (new Date() - startTime) / 60000; // in minutes
+        const wpm = Math.round((typedLength / 5) / timeElapsed) || 0;
+        wpmDisplay.innerText = wpm;
+
+        // Accuracy Calculation
+        const accuracy = typedLength > 0 
+            ? Math.max(0, Math.round(((typedLength - mistakes) / typedLength) * 100)) 
+            : 100;
+        accuracyDisplay.innerText = `${accuracy}%`;
+    }
 
     // Initial load
     loadSentence();
